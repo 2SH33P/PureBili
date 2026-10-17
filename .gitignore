@@ -1,0 +1,38 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+*.lock.bak
+pubspec.lock
+
+# Platform build output
+**/Pods/
+**/Podfile.lock
+**/.symlinks/
+**/ephemeral/
+*.xcworkspace/xcuserdata/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+macos/Flutter/Generated.xcconfig
+macos/Flutter/ephemeral/
+android/local.properties
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/key.properties
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
