@@ -39,4 +39,11 @@ void main() {
           '\t<key>NSAppTransportSecurity</key>\n\t<dict>\n\t\t<key>NSAllowsArbitraryLoads</key>\n\t\t<true/>\n\t</dict>\n</dict>\n</plist>\n'),
     );
   }
+
+  // 显示名称统一为 PureBili
+  patch('android/app/src/main/AndroidManifest.xml', (s) => s.contains('android:label="PureBili"'),
+      (s) => s.replaceFirst(RegExp(r'android:label="[^"]*"'), 'android:label="PureBili"'));
+  patch('ios/Runner/Info.plist', (s) => s.contains('<string>PureBili</string>'),
+      (s) => s.replaceFirstMapped(RegExp(r'(<key>CFBundleDisplayName</key>\s*<string>)[^<]*(</string>)'),
+          (m) => '${m[1]}PureBili${m[2]}'));
 }

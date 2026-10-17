@@ -88,7 +88,7 @@ class _MePageState extends State<MePage> {
                 ),
               ),
               GlassTile(
-                icon: CupertinoIcons.sparkles_tv,
+                icon: CupertinoIcons.tv,
                 iconColor: const Color(0xFF5856D6),
                 title: '默认画质',
                 trailing: PopupMenuButton<int>(
