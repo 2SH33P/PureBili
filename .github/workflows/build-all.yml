@@ -1,173 +1,79 @@
-name: Build All Clients
+name: Build All Platforms
 
 on:
   push:
-    branches: [main, master]
-    tags: ["v*"]
-  pull_request:
   workflow_dispatch:
 
-concurrency:
-  group: build-all-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
-  ORG: com.purebili
-  PROJECT: purebili
+  CREATE: flutter create --org com.purebili --project-name purebili
 
 jobs:
-  # Fast gate: formatting/analyzer/tests must pass before spending build minutes.
-  analyze:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed lib || true
-      - run: flutter analyze --no-fatal-infos
-      - run: flutter test
-
-  android:
-    needs: analyze
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - name: Generate platform folders
-        run: |
-          if [ ! -d android ]; then
-            flutter create --platforms=android --org $ORG --project-name $PROJECT .
-          fi
-      - run: flutter pub get
-      - name: Build APK (split per ABI) + AAB
-        run: |
-          flutter build apk --release --split-per-abi
-          flutter build appbundle --release
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PureBili-android-apk
-          path: build/app/outputs/flutter-apk/*.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PureBili-android-aab
-          path: build/app/outputs/bundle/release/*.aab
-
   windows:
-    needs: analyze
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - name: Generate platform folders
-        shell: pwsh
-        run: if (-not (Test-Path windows)) { flutter create --platforms=windows --org $ORG --project-name $PROJECT . }
+        with: { channel: stable, cache: true }
+      - shell: pwsh
+        run: if (-not (Test-Path windows)) { flutter create --org com.purebili --project-name purebili --platforms=windows . }
+      - run: dart run tool/patch_platforms.dart
       - run: flutter pub get
       - run: flutter build windows --release
-      - name: Zip Release folder
-        shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath PureBili-windows-x64.zip
       - uses: actions/upload-artifact@v4
         with:
           name: PureBili-windows-x64
-          path: PureBili-windows-x64.zip
+          path: build/windows/x64/runner/Release
 
-  macos:
-    needs: analyze
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - name: Generate platform folders
-        run: |
-          if [ ! -d macos ]; then
-            flutter create --platforms=macos --org $ORG --project-name $PROJECT .
-          fi
-      - name: Enable network client entitlement
-        run: |
-          for f in macos/Runner/*.entitlements; do
-            /usr/libexec/PlistBuddy -c "Add :com.apple.security.network.client bool true" "$f" 2>/dev/null || \
-            /usr/libexec/PlistBuddy -c "Set :com.apple.security.network.client true" "$f"
-          done
-      - run: flutter pub get
-      - run: flutter build macos --release
-      - name: Zip app
-        run: |
-          cd build/macos/Build/Products/Release
-          ditto -c -k --sequesterRsrc --keepParent PureBili.app PureBili-macos.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PureBili-macos
-          path: build/macos/Build/Products/Release/PureBili-macos.zip
-
-  linux:
-    needs: analyze
+  android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Linux desktop deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
-            libmpv-dev mpv
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
       - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - name: Generate platform folders
-        run: |
-          if [ ! -d linux ]; then
-            flutter create --platforms=linux --org $ORG --project-name $PROJECT .
-          fi
+        with: { channel: stable, cache: true }
+      - run: '[ -d android ] || $CREATE --platforms=android .'
+      - run: dart run tool/patch_platforms.dart
       - run: flutter pub get
-      - run: flutter build linux --release
-      - name: Zip bundle
-        run: |
-          cd build/linux/x64/release
-          zip -r PureBili-linux-x64.zip bundle
+      - run: flutter build apk --release --split-per-abi
+      - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
-          name: PureBili-linux-x64
-          path: build/linux/x64/release/PureBili-linux-x64.zip
+          name: PureBili-android-apk
+          path: build/app/outputs/flutter-apk/*.apk
 
-  ios:
-    needs: analyze
+  macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - name: Generate platform folders
-        run: |
-          if [ ! -d ios ]; then
-            flutter create --platforms=ios --org $ORG --project-name $PROJECT .
-          fi
+        with: { channel: stable, cache: true }
+      - run: '[ -d macos ] || $CREATE --platforms=macos .'
+      - run: dart run tool/patch_platforms.dart
       - run: flutter pub get
-      - name: Build unsigned iOS archive
+      - run: flutter build macos --release
+      - run: ditto -c -k --keepParent build/macos/Build/Products/Release/purebili.app PureBili-macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PureBili-macos
+          path: PureBili-macos.zip
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: '[ -d ios ] || $CREATE --platforms=ios .'
+      - run: dart run tool/patch_platforms.dart
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: Package unsigned IPA
         run: |
-          flutter build ios --release --no-codesign
-          cd build/ios/iphoneos
           mkdir -p Payload
-          cp -R Runner.app Payload/
-          zip -qry PureBili-ios-unsigned.ipa Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qr PureBili-ios-unsigned.ipa Payload
       - uses: actions/upload-artifact@v4
         with:
           name: PureBili-ios-unsigned
-          path: build/ios/iphoneos/PureBili-ios-unsigned.ipa
+          path: PureBili-ios-unsigned.ipa

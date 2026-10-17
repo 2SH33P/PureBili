@@ -26,28 +26,25 @@
 1. **网络层白名单**：白名单之外的接口请求会被直接拦截，推荐和购买类接口永远不会被调用。
 2. **内容过滤**：动态只保留普通视频投稿，搜索结果去掉推广和付费内容，文本中的商品链接会被删除。
 
-## 构建 Windows 版
+## 构建安装包（四端）
 
-**方式一：本地构建**
-1. 安装 [Flutter](https://docs.flutter.dev/get-started/install/windows)（3.27 或更新）。
-2. 安装 Visual Studio 2022，并勾选「使用 C++ 的桌面开发」工作负载。
-3. 双击 `build_windows.bat`。
-4. 产物在 `build\windows\x64\runner\Release\purebili.exe`，同时生成 `PureBili-windows-x64.zip`（发给别人时要发整个 Release 文件夹）。
+### 方式一：GitHub Actions 一次出齐四端（推荐，不用装任何东西）
+把代码推到 GitHub 仓库，`.github/workflows/build-all.yml` 会自动构建，完成后在 Actions 页面下载：
 
-**方式二：GitHub Actions 云端构建（不用装任何东西）**
-把代码推送到 GitHub 仓库，`.github/workflows/build-windows.yml` 会自动构建。构建完成后在 Actions 页面下载 `PureBili-windows-x64`。
+| 产物 | 平台 | 说明 |
+| --- | --- | --- |
+| PureBili-windows-x64 | Windows 10/11 | 解压后运行 purebili.exe |
+| PureBili-android-apk | Android | 不知道选哪个就装 app-release.apk（通用包）；arm64-v8a 适合绝大多数手机 |
+| PureBili-macos | macOS | 未签名：首次打开请右键 → 打开，或执行 `xattr -cr purebili.app` |
+| PureBili-ios-unsigned | iOS / iPadOS | 未签名 IPA，需要用 AltStore / Sideloadly / TrollStore 自签安装 |
 
-## 其他平台
+### 方式二：本地构建
+- **Windows**：装 Flutter 3.27+ 和 Visual Studio 2022（勾选「使用 C++ 的桌面开发」），双击 `build_windows.bat`。
+- **Android**：装 Flutter、Android SDK、JDK 17，运行 `./build.sh android`。
+- **macOS**：在 Mac 上装 Flutter 和 Xcode，运行 `./build.sh macos`。
+- **iOS / iPadOS**：在 Mac 上装 Flutter 和 Xcode，运行 `./build.sh ios`。
 
-```bash
-flutter create --platforms=windows,android,ios,macos --org com.purebili --project-name purebili .
-flutter pub get
-flutter build apk --release      # Android
-flutter build ios --release      # iOS / iPadOS（需 macOS + Xcode）
-flutter build macos --release    # macOS
-```
-
-macOS 需在 `macos/Runner/*.entitlements` 中添加 `com.apple.security.network.client = true`。
+脚本会先用 `flutter create` 生成平台目录，再执行 `tool/patch_platforms.dart` 补齐网络权限：Android 的 INTERNET 权限、macOS 沙盒的网络权限、iOS/macOS 的 ATS 配置。
 
 ## 尚未实现
 

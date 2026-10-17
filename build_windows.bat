@@ -7,6 +7,7 @@ if not exist windows (
   echo Generating platform folders...
   call flutter create --platforms=windows,android,ios,macos --org com.purebili --project-name purebili . || goto :fail
 )
+call dart run tool/patch_platforms.dart || goto :fail
 call flutter pub get || goto :fail
 call flutter build windows --release || goto :fail
 powershell -NoProfile -Command "Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath 'PureBili-windows-x64.zip' -Force" || goto :fail
