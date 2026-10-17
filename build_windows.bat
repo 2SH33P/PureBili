@@ -9,7 +9,7 @@ if not exist windows (
 )
 call dart run tool/patch_platforms.dart || goto :fail
 call flutter pub get || goto :fail
-call dart run flutter_launcher_icons || goto :fail
+call dart run tool/gen_icons.dart || goto :fail
 call flutter build windows --release || goto :fail
 powershell -NoProfile -Command "Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath 'PureBili-windows-x64.zip' -Force" || goto :fail
 echo.

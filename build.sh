@@ -9,7 +9,7 @@ command -v flutter >/dev/null || { echo "Flutter SDK not found"; exit 1; }
 [ -d "$P" ] || flutter create --org com.purebili --project-name purebili --platforms="$P" .
 dart run tool/patch_platforms.dart
 flutter pub get
-dart run flutter_launcher_icons
+dart run tool/gen_icons.dart
 case "$P" in
   android)
     flutter build apk --release --split-per-abi

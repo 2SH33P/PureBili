@@ -18,7 +18,7 @@ jobs:
         run: if (-not (Test-Path windows)) { flutter create --org com.purebili --project-name purebili --platforms=windows . }
       - run: dart run tool/patch_platforms.dart
       - run: flutter pub get
-      - run: dart run flutter_launcher_icons
+      - run: dart run tool/gen_icons.dart
       - run: flutter build windows --release
       - uses: actions/upload-artifact@v4
         with:
@@ -36,7 +36,7 @@ jobs:
       - run: '[ -d android ] || $CREATE --platforms=android .'
       - run: dart run tool/patch_platforms.dart
       - run: flutter pub get
-      - run: dart run flutter_launcher_icons
+      - run: dart run tool/gen_icons.dart
       - run: flutter build apk --release --split-per-abi
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
@@ -53,7 +53,7 @@ jobs:
       - run: '[ -d macos ] || $CREATE --platforms=macos .'
       - run: dart run tool/patch_platforms.dart
       - run: flutter pub get
-      - run: dart run flutter_launcher_icons
+      - run: dart run tool/gen_icons.dart
       - run: flutter build macos --release
       - run: ditto -c -k --keepParent build/macos/Build/Products/Release/purebili.app PureBili-macos.zip
       - uses: actions/upload-artifact@v4
@@ -70,7 +70,7 @@ jobs:
       - run: '[ -d ios ] || $CREATE --platforms=ios .'
       - run: dart run tool/patch_platforms.dart
       - run: flutter pub get
-      - run: dart run flutter_launcher_icons
+      - run: dart run tool/gen_icons.dart
       - run: flutter build ios --release --no-codesign
       - name: Package unsigned IPA
         run: |
